@@ -1,7 +1,12 @@
 import sys
+from typing import TypeVar
 
 import boto3
 from botocore.exceptions import ClientError
+
+
+# Declare type variable for boto3.resources.factory.ec2.Instance
+Ec2Instance = TypeVar('Ec2Instance', bound='boto3.resources.factory.ec2.Instance')
 
 
 def check_tag_exist(tags: list, tag_key: str, tag_value: str = '') -> bool:
@@ -35,11 +40,11 @@ def is_action_allowed(action: str) -> None:
     """
     allowed_ec2_actions = ['stop', 'terminate']
     if action not in allowed_ec2_actions:
-        print('Not allowed "ec2_action" value')
+        print('Not allowed "ec2_action" value!')
         sys.exit()
 
 
-def perform_action_on_instance(action: str, instance, **kwargs) -> bool:
+def perform_action_on_instance(action: str, instance: Ec2Instance, **kwargs) -> bool:
     """
     Performs the specified action (stop or terminate) on the EC2 instance if necessary.
     Returns True if the action was performed on the EC2 instance.
@@ -104,7 +109,7 @@ def main(aws_region, ec2_action, **kwargs) -> None:
 if __name__ == '__main__':
     aws_region_name = 'eu-west-1'
     # Action that should be performed on the EC2 instances
-    ec2_action = 'stop'
+    ec2_action = 'terminate'
 
     main_attrs = {
         'aws_region': aws_region_name,
