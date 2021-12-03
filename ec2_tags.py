@@ -1,5 +1,6 @@
 import sys
 from typing import TypeVar
+import argparse
 
 import boto3
 from botocore.exceptions import ClientError
@@ -94,34 +95,63 @@ def main(aws_region, ec2_action, **kwargs) -> None:
     # Get all EC2 instances in specified AWS region
     ec2 = boto3.resource('ec2', region_name=aws_region)
     ec2_instances_all = ec2.instances.all()
-
+    # Helper variable indicating whether an action has been performed on any instance
+    ec2_instance_action_taken = False
     for instance in ec2_instances_all:
         instance_current_state = instance.state['Name']
         instance_proper_state: bool = check_proper_instance_state(action=ec2_action, ec2_current_state=instance_current_state)
-        print(f'{instance.id}, {instance_current_state}, instance_tags: {instance.tags}')   # For tests
+        # print(f'{instance.id}, {instance_current_state}, instance_tags: {instance.tags}')   # For tests
         # Perform action on EC2 instance if it is in the correct state
         if instance_proper_state:
-            action_taken: bool = perform_action_on_instance(action=ec2_action, instance=instance, **additional_args)
-    if 'action_taken' not in locals() or not action_taken:
+            instance_state_changed: bool = perform_action_on_instance(action=ec2_action,
+                                                                      instance=instance,
+                                                                      **additional_args)
+            if instance_state_changed:
+                ec2_instance_action_taken = True
+    if not ec2_instance_action_taken:
         print('Nothing to do...')
 
 
 if __name__ == '__main__':
-    aws_region_name = 'eu-west-1'
-    # Action that should be performed on the EC2 instances
-    ec2_action = 'terminate'
+    aws_region_default = 'eu-west-1'
 
+    parser = argparse.ArgumentParser(description='The EC2 tags actions script')
+    # Positional argument
+    parser.add_argument('action', choices=['stop', 'terminate'], help='action to be performed on instances')
+    parser.add_argument('-r', '--region', default=aws_region_default, type=str,
+                        help=f'AWS region in which instances are deployed (default: {aws_region_default})')
+    # 1st "mutually exclusive" group of args
+    parser.add_argument('-n', '--no-name', action='store_true', help='perform action on instances without Name tag')
+    # 2nd "mutually exclusive" group of args
+    parser.add_argument('-k', '--tag-key', type=str, help='perform action on instances with specified tag key')
+    parser.add_argument('-v', '--tag-value', type=str, help='perform action on instances with specified tag value')
+
+    args = parser.parse_args()
+    # Simple mutually exclusive check - ec2_tags [-n | [-k abc -v def]]
+    if args.no_name and (args.tag_key or args.tag_value):
+        parser.error('-n/--no-name and pair of -k/--tag-key, -v/--tag-value are mutually exclusive')
+        sys.exit()
+    # Checks whether -k and -v tags have been specified together
+    if bool(args.tag_key) ^ bool(args.tag_value):
+        parser.error('-k/--tag-key and -v/--tag-value must be given together')
+        sys.exit()
+
+    # Get data from argparse
     main_attrs = {
-        'aws_region': aws_region_name,
-        'ec2_action': ec2_action
+        'aws_region': args.region,
+        'ec2_action': args.action
     }
+    if args.no_name:
+        main_attrs['ec2_no_name_tag'] = args.no_name
+    elif args.tag_key and args.tag_value:
+        main_attrs['ec2_tag'] = {
+            'tag_key': args.tag_key,
+            'tag_value': args.tag_value
+        }
+    else:
+        # Default option - EC2 instances without assigned tags
+        main_attrs['ec2_no_tags'] = True
 
-    main_attrs['ec2_no_tags'] = True
-    # main_attrs['ec2_no_name_tag'] = True
-    # main_attrs['ec2_tag'] = {
-    #     'tag_key': 'Name',
-    #     'tag_value': 'test1'
-    # }
     # Run script's main func
     main(**main_attrs)
 
