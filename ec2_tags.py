@@ -35,6 +35,17 @@ def check_proper_instance_state(action: str, ec2_current_state: str) -> bool:
     return False
 
 
+def check_aws_region(region_specified: str) -> bool:
+    """
+    Checks whether given text value is a valid AWS region name.
+    """
+    # Get AWS region names
+    ec2_client = boto3.client('ec2')
+    aws_regions: list = ec2_client.describe_regions(AllRegions=True)['Regions']
+    aws_region_names = [region['RegionName'] for region in aws_regions]
+    return region_specified in aws_region_names
+
+
 def is_action_allowed(action: str) -> None:
     """
     Checks whether given EC2 action is allowed.
@@ -79,7 +90,7 @@ def perform_action_on_instance(action: str, instance: Ec2Instance, **kwargs) -> 
             instance.stop()
             print(f'Instance with id "{instance.id}" stopped...')
         except ClientError as err:
-            # Handle exception when instance in 'pending' state.
+            # Handle exception when instance in 'pending' state
             error_msg = err.response['Error']['Message']
             print(f'Error: {error_msg}. Try later...')
     return take_action
@@ -134,6 +145,10 @@ if __name__ == '__main__':
     # Checks whether -k and -v tags have been specified together
     if bool(args.tag_key) ^ bool(args.tag_value):
         parser.error('-k/--tag-key and -v/--tag-value must be given together')
+        sys.exit()
+    # Checks whether provided -r value is valid AWS region name
+    if not check_aws_region(region_specified=args.region):
+        parser.error(f'value {args.region} is not valid AWS region name')
         sys.exit()
 
     # Get data from argparse
