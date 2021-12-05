@@ -25,13 +25,15 @@
 
 ## Requirements
 - Python third party packages: [Boto3](https://boto3.amazonaws.com/v1/documentation/api/latest/index.html)
-- Before using the script, you need to set up valid authentication credentials for your AWS account (with programmatic access) using either the IAM Management Console or the [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2-linux.html) tool.
+- Before using the script, you need to set up default AWS region value and valid authentication credentials for your AWS account (programmatic access) using either the IAM Management Console or the [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2-linux.html) tool.
 - The entity running the script should have the appropriate permissions to stop or terminate EC2 instances.
 
 ## Installation with venv
 The script can be run locally with virtualenv tool. Run following commands in order to create virtual environment and install the required packages.
 ```bash
 $ virtualenv venv
+# or
+$ python3 -m venv venv
 $ source venv/bin/activate
 (venv) $ pip install -r requirements.txt
 ```

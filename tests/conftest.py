@@ -14,6 +14,7 @@ def aws_credentials():
     os.environ['AWS_SECRET_ACCESS_KEY'] = 'testing'
     os.environ['AWS_SECURITY_TOKEN'] = 'testing'
     os.environ['AWS_SESSION_TOKEN'] = 'testing'
+    os.environ['AWS_DEFAULT_REGION'] = 'eu-west-1'
 
 
 @fixture
@@ -22,7 +23,7 @@ def ec2_resource(aws_credentials):
     Create mocked EC2 service resource.
     """
     with mock_ec2():
-        yield boto3.resource('ec2', region_name='eu-west-1')
+        yield boto3.resource('ec2')
 
 
 @fixture
@@ -31,7 +32,7 @@ def ec2_client(aws_credentials):
     Create mocked EC2 service client.
     """
     with mock_ec2():
-        yield boto3.client('ec2', region_name='eu-west-1')
+        yield boto3.client('ec2')
 
 
 @fixture

@@ -1,7 +1,7 @@
 from ec2_tags import check_aws_region, perform_action_on_instance
 
 
-def test_check_aws_region_all_valid(ec2_instance):
+def test_check_aws_region_all_valid(ec2_resource):
     """
     GIVEN List of valid AWS region names.
     WHEN check_aws_region() is called.
@@ -12,7 +12,7 @@ def test_check_aws_region_all_valid(ec2_instance):
         assert check_aws_region(region_specified=region)
 
 
-def test_check_aws_region_partially_valid(ec2_instance):
+def test_check_aws_region_partially_valid(ec2_resource):
     """
     GIVEN List containing a values that are not a valid AWS region.
     WHEN check_aws_region() is called.
