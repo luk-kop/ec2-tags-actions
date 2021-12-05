@@ -5,7 +5,7 @@ import boto3
 from moto import mock_ec2
 
 
-@fixture(scope='function')
+@fixture
 def aws_credentials():
     """
     Mocked AWS Credentials for moto.
@@ -16,25 +16,25 @@ def aws_credentials():
     os.environ['AWS_SESSION_TOKEN'] = 'testing'
 
 
-@fixture(scope='function')
+@fixture
 def ec2_resource(aws_credentials):
     """
     Create mocked EC2 service resource.
     """
     with mock_ec2():
-        yield boto3.resource('ec2')
+        yield boto3.resource('ec2', region_name='eu-west-1')
 
 
-@fixture(scope='function')
+@fixture
 def ec2_client(aws_credentials):
     """
     Create mocked EC2 service client.
     """
     with mock_ec2():
-        yield boto3.client('ec2')
+        yield boto3.client('ec2', region_name='eu-west-1')
 
 
-@fixture(scope='function')
+@fixture
 def ec2_instance(ec2_resource, ec2_client):
     """
     Dummy EC2 instance.
