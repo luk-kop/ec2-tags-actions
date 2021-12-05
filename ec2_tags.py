@@ -29,9 +29,9 @@ def check_proper_instance_state(action: str, ec2_current_state: str) -> bool:
     Checks whether the EC2 instance is in desired state.
     """
     if action == 'terminate':
-        return ec2_current_state not in ['terminated', 'shutting-down']
+        return ec2_current_state in ['pending', 'running', 'stopping', 'stopped']
     elif action == 'stop':
-        return ec2_current_state not in ['terminated', 'shutting-down', 'stopping', 'stopped']
+        return ec2_current_state in ['pending', 'running']
     return False
 
 
@@ -53,7 +53,7 @@ def is_action_allowed(action: str) -> None:
     allowed_ec2_actions = ['stop', 'terminate']
     if action not in allowed_ec2_actions:
         print('Not allowed "ec2_action" value!')
-        sys.exit()
+        sys.exit(1)
 
 
 def perform_action_on_instance(action: str, instance: Ec2Instance, **kwargs) -> bool:
@@ -141,15 +141,15 @@ if __name__ == '__main__':
     # Simple mutually exclusive check - ec2_tags [-n | [-k abc -v def]]
     if args.no_name and (args.tag_key or args.tag_value):
         parser.error('-n/--no-name and pair of -k/--tag-key, -v/--tag-value are mutually exclusive')
-        sys.exit()
+        sys.exit(1)
     # Checks whether -k and -v tags have been specified together
     if bool(args.tag_key) ^ bool(args.tag_value):
         parser.error('-k/--tag-key and -v/--tag-value must be given together')
-        sys.exit()
+        sys.exit(1)
     # Checks whether provided -r value is valid AWS region name
     if not check_aws_region(region_specified=args.region):
         parser.error(f'value {args.region} is not valid AWS region name')
-        sys.exit()
+        sys.exit(1)
 
     # Get data from argparse
     main_attrs = {
