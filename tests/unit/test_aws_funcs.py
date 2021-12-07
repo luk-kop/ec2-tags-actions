@@ -159,93 +159,53 @@ def test_perform_action_on_instance_no_action_name_tag_stop(ec2_resource, ec2_in
     assert ec2_instance.state['Name'] == 'running'
 
 
-def test_perform_action_on_instance_no_action_no_tags_stop(ec2_resource, ec2_instance):
+def test_perform_action_on_instance_no_action_no_tags_stop(ec2_instance_with_tag):
     """
     GIVEN Instance with assigned tag.
     WHEN perform_action_on_instance() is called.
     THEN No action has been performed on given instance.
     """
-    # Add Name tag to instance
-    ec2_resource.create_tags(
-        Resources=[ec2_instance.id],
-        Tags=[
-            {
-                'Key': 'TestTag',
-                'Value': 'Dummy-Instance'
-            }
-        ]
-    )
-    ec2_instance.start()
-    assert not perform_action_on_instance(action='stop', instance=ec2_instance, ec2_no_tags=True)
-    assert ec2_instance.state['Name'] == 'running'
+    ec2_instance_with_tag.start()
+    assert not perform_action_on_instance(action='stop', instance=ec2_instance_with_tag, ec2_no_tags=True)
+    assert ec2_instance_with_tag.state['Name'] == 'running'
 
 
-def test_perform_action_on_instance_no_action_no_tags_terminate(ec2_resource, ec2_instance):
+def test_perform_action_on_instance_no_action_no_tags_terminate(ec2_instance_with_tag):
     """
     GIVEN Instance with assigned tag.
     WHEN perform_action_on_instance() is called.
     THEN No action has been performed on given instance.
     """
-    # Add Name tag to instance
-    ec2_resource.create_tags(
-        Resources=[ec2_instance.id],
-        Tags=[
-            {
-                'Key': 'TestTag',
-                'Value': 'Dummy-Instance'
-            }
-        ]
-    )
-    ec2_instance.start()
-    assert not perform_action_on_instance(action='terminate', instance=ec2_instance, ec2_no_tags=True)
-    assert ec2_instance.state['Name'] == 'running'
+    ec2_instance_with_tag.start()
+    assert not perform_action_on_instance(action='terminate', instance=ec2_instance_with_tag, ec2_no_tags=True)
+    assert ec2_instance_with_tag.state['Name'] == 'running'
 
 
-def test_perform_action_on_instance_no_action_specified_ec2_tag_terminate(ec2_resource, ec2_instance):
+def test_perform_action_on_instance_no_action_specified_ec2_tag_terminate(ec2_instance_with_tag):
     """
     GIVEN Instance with assigned tag.
     WHEN perform_action_on_instance() is called.
     THEN No action has been performed on given instance.
     """
-    # Add Name tag to instance
-    ec2_resource.create_tags(
-        Resources=[ec2_instance.id],
-        Tags=[
-            {
-                'Key': 'TestTag',
-                'Value': 'Dummy-Instance'
-            }
-        ]
-    )
-    ec2_instance.start()
+    ec2_instance_with_tag.start()
     ec2_tag_wanted = {
-        'tag_key': 'Name',
-        'tag_value': 'Dummy-Instance'
+        'tag_key': 'Env',
+        'tag_value': 'Staging'
     }
-    assert not perform_action_on_instance(action='terminate', instance=ec2_instance, ec2_tag=ec2_tag_wanted)
-    assert ec2_instance.state['Name'] == 'running'
+    assert not perform_action_on_instance(action='terminate', instance=ec2_instance_with_tag, ec2_tag=ec2_tag_wanted)
+    assert ec2_instance_with_tag.state['Name'] == 'running'
 
 
-def test_perform_action_on_instance_no_action_specified_ec2_tag_stop(ec2_resource, ec2_instance):
+def test_perform_action_on_instance_no_action_specified_ec2_tag_stop(ec2_instance_with_tag):
     """
     GIVEN Instance with assigned tag.
     WHEN perform_action_on_instance() is called.
     THEN No action has been performed on given instance.
     """
-    # Add Name tag to instance
-    ec2_resource.create_tags(
-        Resources=[ec2_instance.id],
-        Tags=[
-            {
-                'Key': 'TestTag',
-                'Value': 'Dummy-Instance'
-            }
-        ]
-    )
-    ec2_instance.start()
+    ec2_instance_with_tag.start()
     ec2_tag_wanted = {
-        'tag_key': 'Name',
-        'tag_value': 'Dummy-Instance'
+        'tag_key': 'Env',
+        'tag_value': 'Staging'
     }
-    assert not perform_action_on_instance(action='stop', instance=ec2_instance, ec2_tag=ec2_tag_wanted)
-    assert ec2_instance.state['Name'] == 'running'
+    assert not perform_action_on_instance(action='stop', instance=ec2_instance_with_tag, ec2_tag=ec2_tag_wanted)
+    assert ec2_instance_with_tag.state['Name'] == 'running'

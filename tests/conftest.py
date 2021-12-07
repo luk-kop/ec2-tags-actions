@@ -45,3 +45,38 @@ def ec2_instance(ec2_resource, ec2_client):
     # Create dummy instance
     instances = ec2_resource.create_instances(ImageId=image_id, MinCount=1, MaxCount=1)
     yield instances[0]
+
+
+@fixture
+def ec2_instance_with_tag(ec2_resource, ec2_client):
+    """
+    Dummy EC2 instance with tag.
+    """
+    # Get image id
+    image_id = ec2_client.describe_images()['Images'][0]['ImageId']
+    # Create dummy instance
+    instances = ec2_resource.create_instances(ImageId=image_id, MinCount=1, MaxCount=1)
+    single_instance = instances[0]
+    # Add tag to instance
+    ec2_resource.create_tags(
+        Resources=[single_instance.id],
+        Tags=[
+            {
+                'Key': 'Env',
+                'Value': 'Production'
+            }
+        ]
+    )
+    yield single_instance
+
+
+@fixture
+def ec2_instance_multiple_instances_no_tags(ec2_resource, ec2_client):
+    """
+    Dummy EC2 instances without tags.
+    """
+    # Get image id
+    image_id = ec2_client.describe_images()['Images'][0]['ImageId']
+    # Create dummy instance
+    instances = ec2_resource.create_instances(ImageId=image_id, MinCount=3, MaxCount=3)
+    yield instances
