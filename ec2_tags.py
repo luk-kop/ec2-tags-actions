@@ -32,6 +32,8 @@ def check_proper_instance_state(action: str, ec2_current_state: str) -> bool:
         return ec2_current_state in ['pending', 'running', 'stopping', 'stopped']
     elif action == 'stop':
         return ec2_current_state in ['pending', 'running']
+    elif action == 'list':
+        return True
     return False
 
 
@@ -50,7 +52,7 @@ def is_action_allowed(action: str) -> None:
     """
     Checks whether given EC2 action is allowed.
     """
-    allowed_ec2_actions = ['stop', 'terminate']
+    allowed_ec2_actions = ['stop', 'terminate', 'list']
     if action not in allowed_ec2_actions:
         print('Not allowed "ec2_action" value!')
         sys.exit(1)
@@ -85,7 +87,7 @@ def perform_action_on_instance(action: str, instance: Ec2Instance, **kwargs) -> 
     if action == 'terminate':
         instance.terminate()
         print(f'Instance with id "{instance.id}" terminated...')
-    else:
+    elif action == 'stop':
         try:
             instance.stop()
             print(f'Instance with id "{instance.id}" stopped...')
@@ -93,6 +95,10 @@ def perform_action_on_instance(action: str, instance: Ec2Instance, **kwargs) -> 
             # Handle exception when instance in 'pending' state
             error_msg = err.response['Error']['Message']
             print(f'Error: {error_msg}. Try later...')
+    else:
+        # Only list effected instances
+        instance_current_state = instance.state['Name']
+        print(f'Instance id: "{instance.id}", current state: "{instance_current_state}"')
     return take_action
 
 
@@ -110,8 +116,10 @@ def main(aws_region, ec2_action, **kwargs) -> None:
     ec2_instance_action_taken = False
     for instance in ec2_instances_all:
         instance_current_state = instance.state['Name']
-        instance_proper_state: bool = check_proper_instance_state(action=ec2_action, ec2_current_state=instance_current_state)
-        # print(f'{instance.id}, {instance_current_state}, instance_tags: {instance.tags}')   # For tests
+        instance_proper_state: bool = check_proper_instance_state(
+            action=ec2_action,
+            ec2_current_state=instance_current_state
+        )
         # Perform action on EC2 instance if it is in the correct state
         if instance_proper_state:
             instance_state_changed: bool = perform_action_on_instance(action=ec2_action,
@@ -124,18 +132,32 @@ def main(aws_region, ec2_action, **kwargs) -> None:
 
 
 if __name__ == '__main__':
-    aws_region_default = 'eu-west-1'
+    AWS_REGION_DEFAULT = 'eu-west-1'
 
     parser = argparse.ArgumentParser(description='The EC2 tags actions script')
     # Positional argument
-    parser.add_argument('action', choices=['stop', 'terminate'], help='action to be performed on instances')
-    parser.add_argument('-r', '--region', default=aws_region_default, type=str,
-                        help=f'AWS region in which instances are deployed (default: {aws_region_default})')
+    parser.add_argument('action',
+                        choices=['stop', 'terminate', 'list'],
+                        help='action to be performed on instances')
+    parser.add_argument('-r',
+                        '--region',
+                        default=AWS_REGION_DEFAULT,
+                        type=str,
+                        help=f'AWS region in which instances are deployed (default: {AWS_REGION_DEFAULT})')
     # 1st "mutually exclusive" group of args
-    parser.add_argument('-n', '--no-name', action='store_true', help='perform action on instances without Name tag')
+    parser.add_argument('-n',
+                        '--no-name',
+                        action='store_true',
+                        help='perform action on instances without Name tag')
     # 2nd "mutually exclusive" group of args
-    parser.add_argument('-k', '--tag-key', type=str, help='perform action on instances with specified tag key')
-    parser.add_argument('-v', '--tag-value', type=str, help='perform action on instances with specified tag value')
+    parser.add_argument('-k',
+                        '--tag-key',
+                        type=str,
+                        help='perform action on instances with specified tag key')
+    parser.add_argument('-v',
+                        '--tag-value',
+                        type=str,
+                        help='perform action on instances with specified tag value')
 
     args = parser.parse_args()
     # Simple mutually exclusive check - ec2_tags [-n | [-k abc -v def]]
@@ -169,4 +191,3 @@ if __name__ == '__main__':
 
     # Run script's main func
     main(**main_attrs)
-

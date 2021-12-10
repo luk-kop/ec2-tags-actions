@@ -7,7 +7,7 @@
 > The **EC2 tags actions** is a simple script that allows you to perform selected actions on EC2 instances based on instance tags.
 
 ## Features
-- EC2 instances in the selected AWS region can be **stopped** or **terminated** based on the tags assigned to them.
+- EC2 instances in the selected AWS region can be **stopped**, **terminated** or only **listed** based on the tags assigned to them.
 - The script can perform an action on one of the following groups::
   - EC2 instances **without assigned tags** (default option);
   - EC2 instances **without assigned `Name` tag**;
@@ -15,7 +15,7 @@
 - You can execute the script with the following arguments:
   - **mandatory**:
     - AWS region name (`-r` or `--region`, default `eu-west-1`);
-    - action to be performed on EC2 instances (`stop` or `terminate`).
+    - action to be performed on EC2 instances (`stop`, `terminate` or `list`).
   - **optional**:
     - tag key (`-k` or `--tag-key`);
     - tag value (`-v` or `--tag-value`);
@@ -42,7 +42,7 @@ $ source venv/bin/activate
 Script usage (detailed help):
 ```bash
 (venv) $ python ec2_tags.py --help
-usage: ec2_tags.py [-h] [-r REGION] [-n] [-k TAG_KEY] [-v TAG_VALUE] {stop,terminate}
+usage: ec2_tags.py [-h] [-r REGION] [-n] [-k TAG_KEY] [-v TAG_VALUE] {stop,terminate,list}
 
 The EC2 tags actions script
 
@@ -69,6 +69,9 @@ Instance with id "i-12345678901234567" stopped...
 Instance with id "i-01234567890123456" stopped...
 # or if no action has been taken
 Nothing to do...
+
+# List EC2 instances in us-east-1 region without Name tag assigned.
+python ec2_tags.py --no-name list
 
 # Terminate EC2 instances in default region (eu-west-1) without Name tag assigned.
 python ec2_tags.py --no-name terminate
