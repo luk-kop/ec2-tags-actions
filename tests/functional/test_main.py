@@ -23,6 +23,17 @@ def test_main_single_instance_no_tags_terminate(ec2_instance):
     assert ec2_instance.state['Name'] == 'terminated'
 
 
+def test_main_single_instance_no_tags_list(ec2_instance):
+    """
+    GIVEN Single instance without assigned tag.
+    WHEN main() is called.
+    THEN Only list action has been performed. Instances are still running.
+    """
+    ec2_instance.start()
+    main(aws_region='eu-west-1', ec2_action='list', ec2_no_tags=True)
+    assert ec2_instance.state['Name'] == 'running'
+
+
 def test_main_single_instance_no_tags_stop_no_action(ec2_instance_with_tag):
     """
     GIVEN Single instance with assigned tag.
@@ -67,6 +78,17 @@ def test_main_single_instance_no_name_tag_terminate(ec2_instance):
     assert ec2_instance.state['Name'] == 'terminated'
 
 
+def test_main_single_instance_no_name_tag_list(ec2_instance):
+    """
+    GIVEN Single instance without assigned Name tag.
+    WHEN main() is called.
+    THEN Only list action has been performed. Instances are still running.
+    """
+    ec2_instance.start()
+    main(aws_region='eu-west-1', ec2_action='list', ec2_no_name_tag=True)
+    assert ec2_instance.state['Name'] == 'running'
+
+
 def test_main_single_instance_specified_ec2_tag_stop(ec2_instance_with_tag):
     """
     GIVEN Single instance with specified tag assigned.
@@ -98,6 +120,21 @@ def test_main_single_instance_specified_ec2_tag_terminate(ec2_instance_with_tag)
     assert ec2_instance_with_tag.state['Name'] == 'terminated'
 
 
+def test_main_single_instance_specified_ec2_tag_list(ec2_instance_with_tag):
+    """
+    GIVEN Single instance with specified tag assigned.
+    WHEN main() is called.
+    THEN Only list action has been performed. Instances are still running.
+    """
+    ec2_instance_with_tag.start()
+    ec2_tag_wanted = {
+        'tag_key': 'Env',
+        'tag_value': 'Production'
+    }
+    main(aws_region='eu-west-1', ec2_action='list', ec2_tag=ec2_tag_wanted)
+    assert ec2_instance_with_tag.state['Name'] == 'running'
+
+
 def test_main_single_instance_with_other_tag_no_name_tag_stop(ec2_instance_with_tag):
     """
     GIVEN Single instance with assigned tags other than Name tag.
@@ -118,6 +155,17 @@ def test_main_single_instance_with_other_tag_no_name_tag_terminate(ec2_instance_
     ec2_instance_with_tag.start()
     main(aws_region='eu-west-1', ec2_action='terminate', ec2_no_name_tag=True)
     assert ec2_instance_with_tag.state['Name'] == 'terminated'
+
+
+def test_main_single_instance_with_other_tag_no_name_tag_list(ec2_instance_with_tag):
+    """
+    GIVEN Single instance with assigned tags other than Name tag.
+    WHEN main() is called.
+    THEN Only list action has been performed. Instances are still running.
+    """
+    ec2_instance_with_tag.start()
+    main(aws_region='eu-west-1', ec2_action='list', ec2_no_name_tag=True)
+    assert ec2_instance_with_tag.state['Name'] == 'running'
 
 
 def test_main_single_instance_with_name_tag_no_name_tag_stop(ec2_resource, ec2_instance_with_tag):
@@ -292,6 +340,20 @@ def test_main_multiple_instances_stopped_no_tags_terminate(ec2_instance_multiple
         assert ec2_instance.state['Name'] == 'terminated'
 
 
+def test_main_multiple_instances_stopped_no_tags_list(ec2_instance_multiple_instances_no_tags):
+    """
+    GIVEN Multiple stopped instances without assigned tag.
+    WHEN main() is called.
+    THEN Only list action has been performed. Instances are still stopped.
+    """
+    ec2_instances = ec2_instance_multiple_instances_no_tags
+    for ec2_instance in ec2_instances:
+        ec2_instance.stop()
+    main(aws_region='eu-west-1', ec2_action='list', ec2_no_tags=True)
+    for ec2_instance in ec2_instances:
+        assert ec2_instance.state['Name'] == 'stopped'
+
+
 def test_main_multiple_instances_no_tags_stop_not_all_instances(ec2_resource, ec2_instance_multiple_instances_no_tags):
     """
     GIVEN Multiple instances without assigned tag.
@@ -385,4 +447,34 @@ def test_main_multiple_instances_stopped_no_name_tag_terminate(ec2_resource, ec2
             assert ec2_instance.state['Name'] == 'stopped'
         else:
             assert ec2_instance.state['Name'] == 'terminated'
+
+
+def test_main_multiple_instances_no_name_tag_list(ec2_resource, ec2_instance_multiple_instances_no_tags):
+    """
+    GIVEN Multiple stopped instances - only two with assigned Name tag.
+    WHEN main() is called.
+    THEN Only list action has been performed. Instances are still running.
+    """
+    ec2_instances = ec2_instance_multiple_instances_no_tags
+    tagged_instance_ids = []
+    for num, ec2_instance in enumerate(ec2_instances, 1):
+        # Assign Name tag only to 1st nad 3rd instance
+        if num in [1, 3]:
+            # Store instance id for later test
+            tagged_instance_ids.append(ec2_instance.id)
+            ec2_resource.create_tags(
+                Resources=[ec2_instance.id],
+                Tags=[
+                    {
+                        'Key': 'Name',
+                        'Value': f'Dummy-instance-{num}'
+                    }
+                ]
+            )
+        ec2_instance.start()
+    # Stop instances except instance without name tags (only 2nd instance)
+    main(aws_region='eu-west-1', ec2_action='list', ec2_no_name_tag=True)
+    for ec2_instance in ec2_instances:
+        assert ec2_instance.state['Name'] == 'running'
+
 

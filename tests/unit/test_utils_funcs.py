@@ -105,7 +105,7 @@ def test_is_action_allowed_true():
     WHEN is_action_allowed() is called.
     THEN None is returned.
     """
-    for action in ['stop', 'terminate']:
+    for action in ['stop', 'terminate', 'list']:
         assert is_action_allowed(action=action) is None
 
 

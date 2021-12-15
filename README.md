@@ -8,6 +8,7 @@
 
 ## Features
 - EC2 instances in the selected AWS region can be **stopped**, **terminated** or only **listed** based on the tags assigned to them.
+- Running the script with the `list` action will also display the instances in the `terminated` and `shutting-down` state.
 - The script can perform an action on one of the following groups::
   - EC2 instances **without assigned tags** (default option);
   - EC2 instances **without assigned `Name` tag**;

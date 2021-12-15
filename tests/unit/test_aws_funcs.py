@@ -73,6 +73,31 @@ def test_perform_action_on_instance_specified_ec2_tag_terminate(ec2_resource, ec
     assert ec2_instance.state['Name'] == 'terminated'
 
 
+def test_perform_action_on_instance_specified_ec2_tag_list(ec2_resource, ec2_instance):
+    """
+    GIVEN Instance with assigned tag.
+    WHEN perform_action_on_instance() is called.
+    THEN Only list action has been performed. Instances are still running.
+    """
+    # Add Name tag to instance
+    ec2_resource.create_tags(
+        Resources=[ec2_instance.id],
+        Tags=[
+            {
+                'Key': 'Name',
+                'Value': 'Dummy-Instance'
+            }
+        ]
+    )
+    ec2_instance.start()
+    ec2_tag_wanted = {
+        'tag_key': 'Name',
+        'tag_value': 'Dummy-Instance'
+    }
+    assert perform_action_on_instance(action='list', instance=ec2_instance, ec2_tag=ec2_tag_wanted)
+    assert ec2_instance.state['Name'] == 'running'
+
+
 def test_perform_action_on_instance_no_tags_stop(ec2_resource, ec2_instance):
     """
     GIVEN Instance without assigned tag.
@@ -95,6 +120,17 @@ def test_perform_action_on_instance_no_tags_terminate(ec2_instance):
     assert ec2_instance.state['Name'] == 'terminated'
 
 
+def test_perform_action_on_instance_no_tags_list(ec2_instance):
+    """
+    GIVEN Instance without assigned tag.
+    WHEN perform_action_on_instance() is called.
+    THEN Only list action has been performed. Instances are still running.
+    """
+    ec2_instance.start()
+    assert perform_action_on_instance(action='list', instance=ec2_instance, ec2_no_tags=True)
+    assert ec2_instance.state['Name'] == 'running'
+
+
 def test_perform_action_on_instance_no_name_tag_terminate(ec2_instance):
     """
     GIVEN Instance without assigned Name tag.
@@ -115,6 +151,17 @@ def test_perform_action_on_instance_no_name_tag_stop(ec2_instance):
     ec2_instance.start()
     assert perform_action_on_instance(action='stop', instance=ec2_instance, ec2_no_name_tag=True)
     assert ec2_instance.state['Name'] == 'stopped'
+
+
+def test_perform_action_on_instance_no_name_tag_list(ec2_instance):
+    """
+    GIVEN Instance without assigned Name tag.
+    WHEN perform_action_on_instance() is called.
+    THEN Only list action has been performed. Instances are still running.
+    """
+    ec2_instance.start()
+    assert perform_action_on_instance(action='list', instance=ec2_instance, ec2_no_name_tag=True)
+    assert ec2_instance.state['Name'] == 'running'
 
 
 def test_perform_action_on_instance_no_action_name_tag_terminate(ec2_resource, ec2_instance):
@@ -208,4 +255,30 @@ def test_perform_action_on_instance_no_action_specified_ec2_tag_stop(ec2_instanc
         'tag_value': 'Staging'
     }
     assert not perform_action_on_instance(action='stop', instance=ec2_instance_with_tag, ec2_tag=ec2_tag_wanted)
+    assert ec2_instance_with_tag.state['Name'] == 'running'
+
+
+def test_perform_action_on_instance_no_action_specified_ec2_tag_list(ec2_instance_with_tag):
+    """
+    GIVEN Instance with assigned tag.
+    WHEN perform_action_on_instance() is called.
+    THEN Only list action has been performed. Instances are still running.
+    """
+    ec2_instance_with_tag.start()
+    ec2_tag_wanted = {
+        'tag_key': 'Env',
+        'tag_value': 'Staging'
+    }
+    assert not perform_action_on_instance(action='list', instance=ec2_instance_with_tag, ec2_tag=ec2_tag_wanted)
+    assert ec2_instance_with_tag.state['Name'] == 'running'
+
+
+def test_perform_action_on_instance_no_action_no_tags_list(ec2_instance_with_tag):
+    """
+    GIVEN Instance with assigned tag.
+    WHEN perform_action_on_instance() is called.
+    THEN Only list action has been performed. Instances are still running.
+    """
+    ec2_instance_with_tag.start()
+    assert not perform_action_on_instance(action='list', instance=ec2_instance_with_tag, ec2_no_tags=True)
     assert ec2_instance_with_tag.state['Name'] == 'running'
